@@ -38,7 +38,19 @@ export default class ClassesController {
       .join('coaches', 'classes.coach_id', '=', 'coaches.id')
       .select(['classes.*', 'coaches.*']);
 
-    return response.json(classes);
+    // Busca a agenda de todas as aulas retornadas
+    const classIds = classes.map((c: any) => c.id);
+    const schedules = await db('class_schedule').whereIn('class_id', classIds);
+
+    // Agrupa a agenda correspondente para cada coach retornado
+    const classesWithSchedules = classes.map((c: any) => {
+      return {
+        ...c,
+        schedule: schedules.filter((s: any) => s.class_id === c.id)
+      };
+    });
+
+    return response.json(classesWithSchedules);
   }
   
   async create(request: Request, response: Response) {
